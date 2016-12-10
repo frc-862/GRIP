@@ -6,6 +6,11 @@
 namespace grip {
 
 $fileName::$fileName() {
+#foreach($step in $pipeline.getSteps())
+#foreach($input in $step.getInputs())
+    #newInputInit($input)
+#end
+#end
 #foreach($source in $pipeline.getSources())
 ##	this->$source.value() = new #cType($source.type())();
 #end

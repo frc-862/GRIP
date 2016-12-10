@@ -35,6 +35,15 @@ namespace grip {
 */
 class $fileName #if($testing): public AbsPipeline #end{
 	private:
+
+    // member variables
+#foreach($step in $pipeline.getSteps())
+#foreach($input in $step.getInputs())
+    #newInputDecl($input)
+#end
+#end
+    // end member variables
+
 #foreach( $source in $pipeline.getSources())
 		#cType($source.type()) $source.value();
 #end

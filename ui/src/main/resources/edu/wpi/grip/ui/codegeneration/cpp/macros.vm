@@ -49,42 +49,110 @@ $name(#foreach($inp in $step.getInputs())#param($inp $names[$count])#set($count 
 #func($step $varArray)
 #end
 
-#macro (newInput $input)
+#macro (inputType $input)
 #if ($input.value().toLowerCase().contains("source") || $input.value().toLowerCase().contains("output"))
-	#cType($input.type()) ${tMeth.name($input.name())} = $tMeth.name($input.value());
+#cType($input.type())##
 #elseif ($input.type().contains("BorderTypesEnumCoreEnum"))
-    int ${tMeth.name($input.name())} = cv::$input.value();
+int##
 #elseif ($input.type().contains("CoreEnum"))
-	int ${tMeth.name($input.name())} = $input.value();
+int##
 #elseif ($input.type().equals("ColorConversionCodesEnum"))
-    int ${tMeth.name($input.name())} = cv::$input.value();
+int##
 #elseif ($input.type().equals("ColormapTypesEnum"))
-    int ${tMeth.name($input.name())} = cv::$input.value();
+int##
 #elseif ($input.type().equals("InterpolationFlagsEnum"))
-    int ${tMeth.name($input.name())} = cv::$input.value();
+int##
 #elseif ($input.type().equals("CVThresholdTypesEnum"))
-    int ${tMeth.name($input.name())} = cv::$input.value();
+int##
 #elseif ($input.type().contains("Enum"))
-	int ${tMeth.name($input.name())} = $input.value();  // ENUM $input.type()
+int##
 #elseif ($input.type().equals("MaskSize") )
-    std::string ${tMeth.name($input.name())} = "$input.value()";
+std::string##
 #elseif ($input.type().equals("FlipCode") || $input.type().equals("BlurType") )
-	$input.type() ${tMeth.name($input.name())} = $input.type()::#cvVal($input.value());
+$input.type()##
 #elseif ($input.type().contains("Type") || $input.type().equals("Interpolation"))
-	int ${tMeth.name($input.name())} = #cvVal($input.value());
+int##
 #elseif ($input.type().equals("String"))
-	std::string ${tMeth.name($input.name())} = "$input.value()";
+std::string##
+#elseif ($input.type().equals("List"))
+double##
+#else
+#cType($input.type())##
+#end#end
+
+#macro (inputVarName $input)${tMeth.name($input.name())}#end
+
+#macro (inputValue $input)
+#if ($input.value().toLowerCase().contains("source") || $input.value().toLowerCase().contains("output"))
+$tMeth.name($input.value())##
+#elseif ($input.type().contains("BorderTypesEnumCoreEnum"))
+cv::$input.value()##
+#elseif ($input.type().contains("CoreEnum"))
+$input.value()##
+#elseif ($input.type().equals("ColorConversionCodesEnum"))
+cv::$input.value()##
+#elseif ($input.type().equals("ColormapTypesEnum"))
+cv::$input.value()##
+#elseif ($input.type().equals("InterpolationFlagsEnum"))
+cv::$input.value()##
+#elseif ($input.type().equals("CVThresholdTypesEnum"))
+cv::$input.value()##
+#elseif ($input.type().contains("Enum"))
+$input.value()##
+#elseif ($input.type().equals("MaskSize") )
+"$input.value()"##
+#elseif ($input.type().equals("FlipCode") || $input.type().equals("BlurType") )
+$input.type()::#cvVal($input.value())##
+#elseif ($input.type().contains("Type") || $input.type().equals("Interpolation"))
+#cvVal($input.value())##
+#elseif ($input.type().equals("String"))
+"$input.value()"##
 #elseif ($input.type().equals("List"))
 #set($inputEndValue = $input.value().length() - 1)
-	double ${tMeth.name($input.name())}[] = {$input.value().substring(1,$inputEndValue)};
-#elseif ($input.type().equals("Point") || $input.type().equals("Size") || $input.type().equalsIgnoreCase("Scalar"))
-	#cType($input.type()) ${tMeth.name($input.name())}$input.value();
+{$input.value().substring(1,$inputEndValue)}##
 #elseif ($input.value().equals("null"))
-	#cType($input.type()) ${tMeth.name($input.name())};
-#elseif ($input.type().equals("Mat"))
-	#cType($input.type()) ${tMeth.name($input.name())}$input.value();
+nullptr##
 #else
-	#cType($input.type()) ${tMeth.name($input.name())} = $input.value();  // default $input.type()
+$input.value()##
+#end#end
+
+#macro (newInputInit $input)
+#if ($input.type().contains("Enum"))
+#inputVarName($input) = #inputValue($input); //ENUM $input.type()
+#elseif ($input.type().equals("List"))
+#set($commaPos = $input.value().indexOf(','))
+#set($v2Pos = $input.value().indexOf(',') + 1)
+#set($inputEndValue = $input.value().length() - 1)
+#inputVarName($input)[0] = $input.value().substring(1,$commaPos);
+#inputVarName($input)[1] = $input.value().substring($v2Pos, $inputEndValue);
+#elseif ($input.type().equals("Point") || $input.type().equals("Size") || $input.type().equalsIgnoreCase("Scalar"))
+#inputVarName($input)#inputValue($input);
+#elseif ($input.value().equals("null"))
+#elseif ($input.type().equals("Mat"))
+#else
+#inputVarName($input) = #inputValue($input);
+#end#end
+
+#macro (newInputDecl $input)
+#if ($input.type().equals("List"))
+#inputType($input) #inputVarName($input)[2];
+#else
+#inputType($input) #inputVarName($input);
+#end#end
+
+#macro (newInput $input)
+#if ($input.type().contains("Enum"))
+    #inputType($input) #inputVarName($input) = #inputValue($input); //ENUM $input.type()
+#elseif ($input.type().equals("List"))
+	#inputType($input) #inputVarName($input)[] = #inputValue($input);
+#elseif ($input.type().equals("Point") || $input.type().equals("Size") || $input.type().equalsIgnoreCase("Scalar"))
+	#inputType($input) #inputVarName($input)#inputValue($input);
+#elseif ($input.value().equals("null"))
+	#inputType($input) #inputVarName($input);
+#elseif ($input.type().equals("Mat"))
+	#inputType($input) #inputVarName($input)#inputValue($input);
+#else
+	#inputType($input) #inputVarName($input) = #inputValue($input);
 #end#end
 
 #macro (cvVal $value)#if($value.equals("INF"))
