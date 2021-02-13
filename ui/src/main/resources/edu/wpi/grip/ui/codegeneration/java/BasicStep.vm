@@ -1,5 +1,5 @@
 #foreach($input in $step.getInputs())
-#newInput($input)
+#newInput($input) 
 #end
 #foreach($output in $step.getOutputs())
 #if($output.mutable())

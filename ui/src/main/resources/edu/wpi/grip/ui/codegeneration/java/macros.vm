@@ -5,7 +5,7 @@ Ref<$obj>#end
 #macro (newInput $input)
 #if($input.mutable())##Is Mutable
 #if($input.hasValue())##Has a set value
-		$input.baseType() ${tMeth.name($input.name())} = $input.value();
+		$input.baseType() ${tMeth.name($input.name())} = ($input.baseType()) getParam("${tMeth.name($input.name())}");
 #else##Has Connected Socket
 		$input.baseType() ${tMeth.name($input.name())} = ${input.value()}.get().$input.baseType()Value();
 #end##end Has a set value
@@ -39,8 +39,15 @@ Ref<$obj>#end
 		$input.type() ${tMeth.name($input.name())} = new ${input.type()}($input.value());
 #else
 		#socketType($input.type()) ${tMeth.name($input.name())} = $input.value();
-#end
-#end#end
+#end#end#end
+
+
+#macro(configInput $step)
+#foreach($input in $step.getInputs())
+#if($input.mutable())##Is Mutable
+#if($input.hasValue())##Has a set value
+				initParam("${tMeth.name($input.name())}", $input.value());
+#end#end#end#end
 
 
 #macro (socketType $type)#if ($type.equals("ContoursReport"))
